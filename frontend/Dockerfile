@@ -34,8 +34,56 @@ RUN npm run build
 # Production image, copy all the files and run nginx
 FROM nginx:alpine AS runner
 
-# Copy custom nginx configuration
-COPY <<EOF /etc/nginx/conf.d/default.conf
+# Create nginx configuration for HTTP only (initial setup)
+COPY <<EOF /etc/nginx/conf.d/default-http.conf
+# HTTP server - handle Let's Encrypt challenges and serve app
+server {
+    listen 80;
+    server_name _;
+    root /usr/share/nginx/html;
+    index index.html;
+    
+    # Let's Encrypt webroot challenge
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+    }
+    
+    # Gzip compression
+    gzip on;
+    gzip_vary on;
+    gzip_min_length 1024;
+    gzip_proxied expired no-cache no-store private auth;
+    gzip_types
+        text/plain
+        text/css
+        text/xml
+        text/javascript
+        application/javascript
+        application/xml+rss
+        application/json;
+
+    # Handle client-side routing
+    location / {
+        try_files \$uri \$uri/ /index.html;
+    }
+
+    # Cache static assets
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+
+    # Health check endpoint
+    location /health {
+        access_log off;
+        return 200 "healthy\n";
+        add_header Content-Type text/plain;
+    }
+}
+EOF
+
+# Create nginx configuration for HTTPS (after certificates are available)
+COPY <<EOF /etc/nginx/conf.d/default-https.conf
 # HTTP server - handle Let's Encrypt challenges and redirect to HTTPS
 server {
     listen 80;
@@ -115,8 +163,35 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 # Create certbot webroot directory
 RUN mkdir -p /var/www/certbot
 
+# Create startup script
+COPY <<EOF /docker-entrypoint.sh
+#!/bin/sh
+set -e
+
+# Create SSL directory if it doesn't exist
+mkdir -p /etc/nginx/ssl
+
+# Check if SSL certificates exist
+if [ -f "/etc/nginx/ssl/cert.pem" ] && [ -f "/etc/nginx/ssl/key.pem" ]; then
+    echo "SSL certificates found, using HTTPS configuration"
+    cp /etc/nginx/conf.d/default-https.conf /etc/nginx/conf.d/default.conf
+else
+    echo "No SSL certificates found, using HTTP-only configuration"
+    cp /etc/nginx/conf.d/default-http.conf /etc/nginx/conf.d/default.conf
+fi
+
+# Test nginx configuration
+nginx -t
+
+# Start nginx
+exec nginx -g "daemon off;"
+EOF
+
+# Make startup script executable
+RUN chmod +x /docker-entrypoint.sh
+
 # Expose ports 80 and 443
 EXPOSE 80 443
 
-# Start nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Use custom entrypoint
+ENTRYPOINT ["/docker-entrypoint.sh"]
