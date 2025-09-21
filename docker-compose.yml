@@ -1,0 +1,40 @@
+services:
+  # Backend service - Node.js server with MediaSoup
+  backend:
+    image: seminlev/webrtc-backend:latest
+    container_name: webrtc-backend
+    ports:
+      - "3001:3001"
+      - "40000-40100:40000-40100/udp"
+      - "40000-40100:40000-40100/tcp"
+    environment:
+      - NODE_ENV=development
+      - PORT=3001
+      - SERVER_HOST=0.0.0.0
+      - CORS_ORIGIN=http://localhost:3000
+      - MEDIASOUP_ANNOUNCED_IP=localhost
+      - MEDIASOUP_MIN_PORT=40000
+      - MEDIASOUP_MAX_PORT=40100
+      - EXTERNAL_DOMAIN=localhost
+    networks:
+      - webrtc-network
+    restart: unless-stopped
+
+  # Frontend service - React app with Nginx
+  frontend:
+    image: seminlev/webrtc-frontend:latest
+    container_name: webrtc-frontend
+    ports:
+      - "3000:80"
+    environment:
+      - NODE_ENV=development
+    networks:
+      - webrtc-network
+    restart: unless-stopped
+
+networks:
+  webrtc-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

@@ -1,0 +1,7 @@
+apiVersion: v2
+dependencies:
+- name: app
+  repository: file://../../../../charts/app
+  version: 0.1.0
+name: apps-core-production
+version: 0.1.0
