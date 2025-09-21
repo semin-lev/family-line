@@ -71,7 +71,7 @@ docker compose --profile ssl run --rm certbot
 
 # Step 3: Copy certificates to nginx SSL directory
 echo -e "${GREEN}📋 Copying certificates to nginx SSL directory...${NC}"
-docker compose exec frontend sh -c "cp -L /etc/letsencrypt/live/$DOMAIN/fullchain.pem /etc/nginx/ssl/cert.pem && cp -L /etc/letsencrypt/live/$DOMAIN/privkey.pem /etc/nginx/ssl/key.pem"
+docker compose run --rm -v ssl_certs:/ssl -v certbot_webroot:/var/www/certbot certbot/certbot sh -c "cp -L /etc/letsencrypt/live/$DOMAIN/fullchain.pem /ssl/cert.pem && cp -L /etc/letsencrypt/live/$DOMAIN/privkey.pem /ssl/key.pem"
 
 # Step 4: Switch to HTTPS configuration and reload nginx
 echo -e "${GREEN}🔄 Switching to HTTPS configuration...${NC}"
@@ -92,4 +92,4 @@ echo "   To renew certificates, run:"
 echo "   docker compose --profile ssl run --rm certbot-renew"
 echo ""
 echo -e "${YELLOW}🔄 Automatic renewal (add to crontab):${NC}"
-echo "   0 */12 * * * cd $(pwd) && docker compose --profile ssl run --rm certbot-renew && docker compose exec frontend sh -c \"cp -L /etc/letsencrypt/live/$DOMAIN/fullchain.pem /etc/nginx/ssl/cert.pem && cp -L /etc/letsencrypt/live/$DOMAIN/privkey.pem /etc/nginx/ssl/key.pem && cp /etc/nginx/conf.d/https-template.conf.disabled /etc/nginx/conf.d/default.conf && nginx -s reload\""
+echo "   0 */12 * * * cd $(pwd) && docker compose --profile ssl run --rm certbot-renew && docker compose run --rm -v ssl_certs:/ssl -v certbot_webroot:/var/www/certbot certbot/certbot sh -c \"cp -L /etc/letsencrypt/live/$DOMAIN/fullchain.pem /ssl/cert.pem && cp -L /etc/letsencrypt/live/$DOMAIN/privkey.pem /ssl/key.pem\" && docker compose exec frontend sh -c \"cp /etc/nginx/conf.d/https-template.conf.disabled /etc/nginx/conf.d/default.conf && nginx -s reload\""
