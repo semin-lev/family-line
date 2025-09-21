@@ -8,14 +8,14 @@ services:
       - "40000-40100:40000-40100/udp"
       - "40000-40100:40000-40100/tcp"
     environment:
-      - NODE_ENV=development
-      - PORT=3001
-      - SERVER_HOST=0.0.0.0
-      - CORS_ORIGIN=http://localhost:3000
-      - MEDIASOUP_ANNOUNCED_IP=localhost
-      - MEDIASOUP_MIN_PORT=40000
-      - MEDIASOUP_MAX_PORT=40100
-      - EXTERNAL_DOMAIN=localhost
+      - NODE_ENV=${NODE_ENV:-development}
+      - PORT=${PORT:-3001}
+      - SERVER_HOST=${SERVER_HOST:-0.0.0.0}
+      - CORS_ORIGIN=${CORS_ORIGIN:-http://localhost:3000}
+      - MEDIASOUP_ANNOUNCED_IP=${MEDIASOUP_ANNOUNCED_IP:-localhost}
+      - MEDIASOUP_MIN_PORT=${MEDIASOUP_MIN_PORT:-40000}
+      - MEDIASOUP_MAX_PORT=${MEDIASOUP_MAX_PORT:-40100}
+      - EXTERNAL_DOMAIN=${EXTERNAL_DOMAIN:-localhost}
     networks:
       - webrtc-network
     restart: unless-stopped
@@ -27,7 +27,7 @@ services:
     ports:
       - "3000:80"
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=${NODE_ENV:-development}
     networks:
       - webrtc-network
     restart: unless-stopped
