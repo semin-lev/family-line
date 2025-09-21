@@ -25,7 +25,10 @@ services:
     image: seminlev/webrtc-frontend:latest
     container_name: webrtc-frontend
     ports:
-      - "3000:80"
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ssl_certs:/etc/nginx/ssl:ro
     environment:
       - NODE_ENV=${NODE_ENV:-development}
     networks:
@@ -38,3 +41,7 @@ networks:
     ipam:
       config:
         - subnet: 172.20.0.0/16
+
+volumes:
+  ssl_certs:
+    driver: local
