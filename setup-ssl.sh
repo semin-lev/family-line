@@ -59,7 +59,7 @@ echo ""
 
 # Step 1: Start frontend service
 echo -e "${GREEN}🚀 Starting frontend service...${NC}"
-docker-compose up -d frontend
+docker compose up -d frontend
 
 # Wait for nginx to start
 echo -e "${YELLOW}⏳ Waiting for nginx to start...${NC}"
@@ -67,19 +67,19 @@ sleep 10
 
 # Step 2: Get SSL certificates
 echo -e "${GREEN}🔐 Obtaining SSL certificates from Let's Encrypt...${NC}"
-docker-compose --profile ssl run --rm certbot
+docker compose --profile ssl run --rm certbot
 
 # Step 3: Copy certificates to nginx SSL directory
 echo -e "${GREEN}📋 Copying certificates to nginx SSL directory...${NC}"
-docker-compose exec frontend sh -c "cp /etc/letsencrypt/live/$DOMAIN/fullchain.pem /etc/nginx/ssl/cert.pem && cp /etc/letsencrypt/live/$DOMAIN/privkey.pem /etc/nginx/ssl/key.pem"
+docker compose exec frontend sh -c "cp /etc/letsencrypt/live/$DOMAIN/fullchain.pem /etc/nginx/ssl/cert.pem && cp /etc/letsencrypt/live/$DOMAIN/privkey.pem /etc/nginx/ssl/key.pem"
 
 # Step 4: Restart frontend to load SSL certificates
 echo -e "${GREEN}🔄 Restarting frontend to load SSL certificates...${NC}"
-docker-compose restart frontend
+docker compose restart frontend
 
 # Step 5: Start all services
 echo -e "${GREEN}🚀 Starting all services...${NC}"
-docker-compose up -d
+docker compose up -d
 
 echo ""
 echo -e "${GREEN}✅ SSL setup complete!${NC}"
@@ -89,7 +89,7 @@ echo -e "   HTTPS: https://$DOMAIN"
 echo ""
 echo -e "${YELLOW}📝 Certificate renewal:${NC}"
 echo "   To renew certificates, run:"
-echo "   docker-compose --profile ssl run --rm certbot-renew"
+echo "   docker compose --profile ssl run --rm certbot-renew"
 echo ""
 echo -e "${YELLOW}🔄 Automatic renewal (add to crontab):${NC}"
-echo "   0 */12 * * * cd $(pwd) && docker-compose --profile ssl run --rm certbot-renew && docker-compose exec frontend sh -c \"cp /etc/letsencrypt/live/$DOMAIN/fullchain.pem /etc/nginx/ssl/cert.pem && cp /etc/letsencrypt/live/$DOMAIN/privkey.pem /etc/nginx/ssl/key.pem && nginx -s reload\""
+echo "   0 */12 * * * cd $(pwd) && docker compose --profile ssl run --rm certbot-renew && docker compose exec frontend sh -c \"cp /etc/letsencrypt/live/$DOMAIN/fullchain.pem /etc/nginx/ssl/cert.pem && cp /etc/letsencrypt/live/$DOMAIN/privkey.pem /etc/nginx/ssl/key.pem && nginx -s reload\""
