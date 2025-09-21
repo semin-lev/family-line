@@ -36,11 +36,20 @@ FROM nginx:alpine AS runner
 
 # Copy custom nginx configuration
 COPY <<EOF /etc/nginx/conf.d/default.conf
-# HTTP server - redirect to HTTPS
+# HTTP server - handle Let's Encrypt challenges and redirect to HTTPS
 server {
     listen 80;
     server_name _;
-    return 301 https://\$server_name\$request_uri;
+    
+    # Let's Encrypt webroot challenge
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+    }
+    
+    # Redirect all other HTTP traffic to HTTPS
+    location / {
+        return 301 https://\$server_name\$request_uri;
+    }
 }
 
 # HTTPS server
@@ -102,6 +111,9 @@ EOF
 
 # Copy the built application
 COPY --from=builder /app/dist /usr/share/nginx/html
+
+# Create certbot webroot directory
+RUN mkdir -p /var/www/certbot
 
 # Expose ports 80 and 443
 EXPOSE 80 443
