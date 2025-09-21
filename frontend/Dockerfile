@@ -35,7 +35,7 @@ RUN npm run build
 FROM nginx:alpine AS runner
 
 # Create nginx configuration for HTTP only (initial setup)
-COPY <<EOF /etc/nginx/conf.d/default-http.conf
+COPY <<EOF /etc/nginx/conf.d/http-template.conf.disabled
 # HTTP server - handle Let's Encrypt challenges and serve app
 server {
     listen 80;
@@ -83,7 +83,7 @@ server {
 EOF
 
 # Create nginx configuration for HTTPS (after certificates are available)
-COPY <<EOF /etc/nginx/conf.d/default-https.conf
+COPY <<EOF /etc/nginx/conf.d/https-template.conf.disabled
 # HTTP server - handle Let's Encrypt challenges and redirect to HTTPS
 server {
     listen 80;
@@ -102,7 +102,8 @@ server {
 
 # HTTPS server
 server {
-    listen 443 ssl http2;
+    listen 443 ssl;
+    http2 on;
     server_name _;
     root /usr/share/nginx/html;
     index index.html;
@@ -171,13 +172,16 @@ set -e
 # Create SSL directory if it doesn't exist
 mkdir -p /etc/nginx/ssl
 
+# Remove any existing default.conf to avoid conflicts
+rm -f /etc/nginx/conf.d/default.conf
+
 # Check if SSL certificates exist
 if [ -f "/etc/nginx/ssl/cert.pem" ] && [ -f "/etc/nginx/ssl/key.pem" ]; then
     echo "SSL certificates found, using HTTPS configuration"
-    cp /etc/nginx/conf.d/default-https.conf /etc/nginx/conf.d/default.conf
+    cp /etc/nginx/conf.d/https-template.conf.disabled /etc/nginx/conf.d/default.conf
 else
     echo "No SSL certificates found, using HTTP-only configuration"
-    cp /etc/nginx/conf.d/default-http.conf /etc/nginx/conf.d/default.conf
+    cp /etc/nginx/conf.d/http-template.conf.disabled /etc/nginx/conf.d/default.conf
 fi
 
 # Test nginx configuration
