@@ -109,8 +109,8 @@ server {
     index index.html;
 
     # SSL configuration - point directly to Let's Encrypt files
-    ssl_certificate /etc/letsencrypt/live/DOMAIN_PLACEHOLDER/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/DOMAIN_PLACEHOLDER/privkey.pem;
+    ssl_certificate /etc/nginx/ssl/live/DOMAIN_PLACEHOLDER/fullchain.pem;
+    ssl_certificate_key /etc/nginx/ssl/live/DOMAIN_PLACEHOLDER/privkey.pem;
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_ciphers ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-SHA256:ECDHE-RSA-AES256-SHA384;
     ssl_prefer_server_ciphers off;
@@ -173,7 +173,7 @@ set -e
 rm -f /etc/nginx/conf.d/default.conf
 
 # Check if SSL certificates exist in Let's Encrypt directory
-if [ -f "/etc/letsencrypt/live/\${DOMAIN}/fullchain.pem" ] && [ -f "/etc/letsencrypt/live/\${DOMAIN}/privkey.pem" ]; then
+if [ -f "/etc/nginx/ssl/live/\${DOMAIN}/fullchain.pem" ] && [ -f "/etc/nginx/ssl/live/\${DOMAIN}/privkey.pem" ]; then
     echo "SSL certificates found, using HTTPS configuration"
     cp /etc/nginx/conf.d/https-template.conf.disabled /etc/nginx/conf.d/default.conf
     # Replace domain placeholder with actual domain
