@@ -108,9 +108,9 @@ server {
     root /usr/share/nginx/html;
     index index.html;
 
-    # SSL configuration
-    ssl_certificate /etc/nginx/ssl/cert.pem;
-    ssl_certificate_key /etc/nginx/ssl/key.pem;
+    # SSL configuration - point directly to Let's Encrypt files
+    ssl_certificate /etc/letsencrypt/live/DOMAIN_PLACEHOLDER/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/DOMAIN_PLACEHOLDER/privkey.pem;
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_ciphers ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-SHA256:ECDHE-RSA-AES256-SHA384;
     ssl_prefer_server_ciphers off;
@@ -169,16 +169,15 @@ COPY <<EOF /docker-entrypoint.sh
 #!/bin/sh
 set -e
 
-# Create SSL directory if it doesn't exist
-mkdir -p /etc/nginx/ssl
-
 # Remove any existing default.conf to avoid conflicts
 rm -f /etc/nginx/conf.d/default.conf
 
-# Check if SSL certificates exist
-if [ -f "/etc/nginx/ssl/cert.pem" ] && [ -f "/etc/nginx/ssl/key.pem" ]; then
+# Check if SSL certificates exist in Let's Encrypt directory
+if [ -f "/etc/letsencrypt/live/\${DOMAIN}/fullchain.pem" ] && [ -f "/etc/letsencrypt/live/\${DOMAIN}/privkey.pem" ]; then
     echo "SSL certificates found, using HTTPS configuration"
     cp /etc/nginx/conf.d/https-template.conf.disabled /etc/nginx/conf.d/default.conf
+    # Replace domain placeholder with actual domain
+    sed -i "s/DOMAIN_PLACEHOLDER/\${DOMAIN}/g" /etc/nginx/conf.d/default.conf
 else
     echo "No SSL certificates found, using HTTP-only configuration"
     cp /etc/nginx/conf.d/http-template.conf.disabled /etc/nginx/conf.d/default.conf
