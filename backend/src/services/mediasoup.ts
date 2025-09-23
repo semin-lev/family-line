@@ -79,7 +79,7 @@ class MediaSoupService {
 
   async createWebRtcTransport(router: Router): Promise<WebRtcTransport> {
     console.log(`[MEDIASOUP] Creating WebRTC transport with announced IP: ${config.mediasoup.announcedIp}`);
-    return await router.createWebRtcTransport({
+    const transport = await router.createWebRtcTransport({
       listenIps: [
         {
           ip: '0.0.0.0',
@@ -90,6 +90,27 @@ class MediaSoupService {
       enableTcp: true,
       preferUdp: false,
     });
+    
+    // Log transport details for debugging
+    console.log(`[MEDIASOUP] Transport created - ID: ${transport.id}`);
+    console.log(`[MEDIASOUP] Transport ICE candidates:`, transport.iceCandidates.map(candidate => ({
+      foundation: candidate.foundation,
+      priority: candidate.priority,
+      ip: candidate.ip,
+      protocol: candidate.protocol,
+      port: candidate.port,
+      type: candidate.type
+    })));
+    console.log(`[MEDIASOUP] Transport ICE parameters:`, {
+      usernameFragment: transport.iceParameters.usernameFragment,
+      password: transport.iceParameters.password
+    });
+    console.log(`[MEDIASOUP] Transport DTLS parameters:`, {
+      role: transport.dtlsParameters.role,
+      fingerprints: transport.dtlsParameters.fingerprints
+    });
+    
+    return transport;
   }
 
   async createProducer(

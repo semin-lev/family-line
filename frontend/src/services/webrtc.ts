@@ -141,9 +141,15 @@ export class WebRTCService {
 
   private async initializeDevice(rtpCapabilities: any): Promise<void> {
     console.log('[FRONTEND] Initializing device with RTP capabilities');
+    console.log('[FRONTEND] Router RTP capabilities:', rtpCapabilities);
     this.device = new mediasoupClient.Device();
     await this.device.load({ routerRtpCapabilities: rtpCapabilities });
     console.log('[FRONTEND] Device initialized successfully');
+    console.log('[FRONTEND] Device RTP capabilities:', this.device.rtpCapabilities);
+    console.log('[FRONTEND] Device supported codecs:', {
+      audio: this.device.rtpCapabilities.codecs?.filter(codec => codec.mimeType.startsWith('audio/')),
+      video: this.device.rtpCapabilities.codecs?.filter(codec => codec.mimeType.startsWith('video/'))
+    });
   }
 
   private async createTransport(transportData: WebRTCTransport): Promise<void> {
@@ -152,6 +158,22 @@ export class WebRTCService {
     }
 
     console.log(`[FRONTEND] Creating ${transportData.direction} transport ${transportData.id}`);
+    console.log(`[FRONTEND] Transport ICE candidates:`, transportData.iceCandidates.map(candidate => ({
+      foundation: candidate.foundation,
+      priority: candidate.priority,
+      ip: candidate.ip,
+      protocol: candidate.protocol,
+      port: candidate.port,
+      type: candidate.type
+    })));
+    console.log(`[FRONTEND] Transport ICE parameters:`, {
+      usernameFragment: transportData.iceParameters.usernameFragment,
+      password: transportData.iceParameters.password
+    });
+    console.log(`[FRONTEND] Transport DTLS parameters:`, {
+      role: transportData.dtlsParameters.role,
+      fingerprints: transportData.dtlsParameters.fingerprints
+    });
 
     if (transportData.direction === 'send') {
       const transport = await this.device.createSendTransport({
@@ -166,6 +188,10 @@ export class WebRTCService {
       transport.on('connect', async ({ dtlsParameters }, callback, errback) => {
         try {
           console.log(`[FRONTEND] Connecting send transport ${transport.id}`);
+          console.log(`[FRONTEND] Send transport DTLS parameters:`, {
+            role: dtlsParameters.role,
+            fingerprints: dtlsParameters.fingerprints
+          });
           this.socket?.emit('connect-transport', {
             transportId: transport.id,
             dtlsParameters,
@@ -180,6 +206,11 @@ export class WebRTCService {
       transport.on('produce', async ({ kind, rtpParameters }, callback, errback) => {
         try {
           console.log(`[FRONTEND] Producing ${kind} on transport ${transport.id}`);
+          console.log(`[FRONTEND] Producer RTP parameters:`, {
+            codecs: rtpParameters.codecs,
+            headerExtensions: rtpParameters.headerExtensions,
+            encodings: rtpParameters.encodings
+          });
           this.socket?.emit('produce', {
             transportId: transport.id,
             kind,
@@ -204,6 +235,10 @@ export class WebRTCService {
       transport.on('connect', async ({ dtlsParameters }, callback, errback) => {
         try {
           console.log(`[FRONTEND] Connecting recv transport ${transport.id}`);
+          console.log(`[FRONTEND] Recv transport DTLS parameters:`, {
+            role: dtlsParameters.role,
+            fingerprints: dtlsParameters.fingerprints
+          });
           this.socket?.emit('connect-transport', {
             transportId: transport.id,
             dtlsParameters,
@@ -353,6 +388,26 @@ export class WebRTCService {
       });
 
       console.log('[WebRTC] User media obtained successfully');
+      console.log('[WebRTC] Local stream tracks:', {
+        audio: this.localStream.getAudioTracks().map(track => ({
+          id: track.id,
+          kind: track.kind,
+          label: track.label,
+          enabled: track.enabled,
+          muted: track.muted,
+          readyState: track.readyState,
+          settings: track.getSettings()
+        })),
+        video: this.localStream.getVideoTracks().map(track => ({
+          id: track.id,
+          kind: track.kind,
+          label: track.label,
+          enabled: track.enabled,
+          muted: track.muted,
+          readyState: track.readyState,
+          settings: track.getSettings()
+        }))
+      });
       this.callState.localStream = this.localStream;
       this.notifyStateChange();
 
@@ -436,9 +491,22 @@ export class WebRTCService {
 
       this.consumers.set(consumerData.id, consumer);
       console.log(`[FRONTEND] Consumer ${consumerData.id} created and stored`);
-      console.log(`[FRONTEND] Consumer track:`, consumer.track);
-      console.log(`[FRONTEND] Consumer track state:`, consumer.track.readyState);
-      console.log(`[FRONTEND] Consumer track enabled:`, consumer.track.enabled);
+      console.log(`[FRONTEND] Consumer details:`, {
+        id: consumer.id,
+        producerId: consumer.producerId,
+        kind: consumer.kind,
+        paused: consumer.paused,
+        track: {
+          id: consumer.track.id,
+          kind: consumer.track.kind,
+          label: consumer.track.label,
+          enabled: consumer.track.enabled,
+          muted: consumer.track.muted,
+          readyState: consumer.track.readyState,
+          settings: consumer.track.getSettings()
+        },
+        rtpParameters: consumer.rtpParameters
+      });
 
       // Resume consumer
       this.socket?.emit('resume-consumer', { consumerId: consumerData.id });
@@ -600,6 +668,107 @@ export class WebRTCService {
   getCallState(): CallState {
     return { ...this.callState };
   }
+
+  // Debug method to log comprehensive WebRTC statistics
+  async logWebRTCStats(): Promise<void> {
+    console.log('=== WebRTC Debug Statistics ===');
+    
+    // Log device information
+    if (this.device) {
+      console.log('Device RTP capabilities:', this.device.rtpCapabilities);
+    }
+    
+    // Log transport information
+    if (this.sendTransport) {
+      console.log('Send Transport ID:', this.sendTransport.id);
+      try {
+        const sendStats = await this.sendTransport.getStats();
+        console.log('Send Transport Stats:', sendStats);
+      } catch (error) {
+        console.log('Could not get send transport stats:', error);
+      }
+    }
+    
+    if (this.recvTransport) {
+      console.log('Recv Transport ID:', this.recvTransport.id);
+      try {
+        const recvStats = await this.recvTransport.getStats();
+        console.log('Recv Transport Stats:', recvStats);
+      } catch (error) {
+        console.log('Could not get recv transport stats:', error);
+      }
+    }
+    
+    // Log producer information
+    console.log('Producers:', Array.from(this.producers.entries()).map(([key, producer]) => ({
+      key,
+      id: producer.id,
+      kind: producer.kind,
+      closed: producer.closed,
+      paused: producer.paused
+    })));
+    
+    // Log consumer information
+    console.log('Consumers:', Array.from(this.consumers.entries()).map(([key, consumer]) => ({
+      key,
+      id: consumer.id,
+      producerId: consumer.producerId,
+      kind: consumer.kind,
+      closed: consumer.closed,
+      paused: consumer.paused
+    })));
+    
+    // Log local stream information
+    if (this.localStream) {
+      console.log('Local Stream:', {
+        id: this.localStream.id,
+        active: this.localStream.active,
+        tracks: this.localStream.getTracks().map(track => ({
+          id: track.id,
+          kind: track.kind,
+          label: track.label,
+          enabled: track.enabled,
+          muted: track.muted,
+          readyState: track.readyState
+        }))
+      });
+    }
+    
+    // Log remote streams information
+    console.log('Remote Streams:', Array.from(this.remoteStreams.entries()).map(([participantId, stream]) => ({
+      participantId,
+      streamId: stream.id,
+      active: stream.active,
+      tracks: stream.getTracks().map(track => ({
+        id: track.id,
+        kind: track.kind,
+        label: track.label,
+        enabled: track.enabled,
+        muted: track.muted,
+        readyState: track.readyState
+      }))
+    })));
+    
+    // Log call state
+    console.log('Call State:', {
+      isInCall: this.callState.isInCall,
+      roomId: this.callState.roomId,
+      participantId: this.callState.participantId,
+      participantName: this.callState.participantName,
+      participantsCount: this.callState.participants.length,
+      remoteStreamsCount: this.callState.remoteStreams.size,
+      isMuted: this.callState.isMuted,
+      isVideoEnabled: this.callState.isVideoEnabled
+    });
+    
+    console.log('=== End WebRTC Debug Statistics ===');
+  }
 }
 
 export const webRTCService = new WebRTCService();
+
+// Expose debug function globally for browser console access
+if (typeof window !== 'undefined') {
+  (window as any).debugWebRTC = () => webRTCService.logWebRTCStats();
+  console.log('WebRTC debug function available: call debugWebRTC() in console');
+}
