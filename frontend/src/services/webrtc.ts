@@ -2,17 +2,16 @@ import * as mediasoupClient from 'mediasoup-client';
 import { io, Socket } from 'socket.io-client';
 import { CallState, WebRTCTransport, Consumer } from '../types';
 
-// Use current location for socket connection to work in local network
+// Use current location for socket connection - all traffic goes through frontend nginx
 const getSocketUrl = () => {
   if (import.meta.env.VITE_SOCKET_URL) {
     console.log(`[WebRTC] Using VITE_SOCKET_URL: ${import.meta.env.VITE_SOCKET_URL}`);
     return import.meta.env.VITE_SOCKET_URL;
   }
   
-  // Use current location but with backend port
+  // Use current location - nginx will proxy WebSocket connections
   const currentLocation = window.location;
-  const backendPort = import.meta.env.VITE_BACKEND_PORT || '3001';
-  const socketUrl = `${currentLocation.protocol}//${currentLocation.hostname}:${backendPort}`;
+  const socketUrl = `${currentLocation.protocol}//${currentLocation.hostname}${currentLocation.port ? `:${currentLocation.port}` : ''}`;
   
   console.log(`[WebRTC] Current location:`, {
     href: currentLocation.href,

@@ -1,16 +1,15 @@
 import { CreateRoomRequest, CreateRoomResponse, Room } from '../types';
 
-// Use current location for API calls to work in local network
+// Use current location for API calls - all traffic goes through frontend nginx
 const getApiBaseUrl = () => {
   if (import.meta.env.VITE_API_URL) {
     console.log(`[API] Using VITE_API_URL: ${import.meta.env.VITE_API_URL}`);
     return import.meta.env.VITE_API_URL;
   }
   
-  // Use current location but with backend port
+  // Use current location - nginx will proxy backend requests
   const currentLocation = window.location;
-  const backendPort = import.meta.env.VITE_BACKEND_PORT || '3001';
-  const apiUrl = `${currentLocation.protocol}//${currentLocation.hostname}:${backendPort}`;
+  const apiUrl = `${currentLocation.protocol}//${currentLocation.hostname}${currentLocation.port ? `:${currentLocation.port}` : ''}`;
   
   console.log(`[API] Current location:`, {
     href: currentLocation.href,
