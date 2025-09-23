@@ -4,8 +4,7 @@ services:
     image: seminlev/webrtc-backend:latest
     container_name: webrtc-backend
     # Remove direct port exposure - all traffic goes through frontend nginx
-    expose:
-      - "3001"
+    ports:
       - "40000-40100:40000-40100/udp"
       - "40000-40100:40000-40100/tcp"
     environment:
