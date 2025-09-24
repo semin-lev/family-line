@@ -2,7 +2,6 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { CreateRoom } from './components/CreateRoom';
 import { JoinRoom } from './components/JoinRoom';
 import { VideoCall } from './components/VideoCall';
-import { DebugInfo } from './components/DebugInfo';
 import { CreateRoomResponse } from './types';
 
 function App() {
@@ -14,7 +13,6 @@ function App() {
   return (
     <Router>
       <div className="min-h-screen bg-gray-50">
-        <DebugInfo />
         <Routes>
           <Route 
             path="/" 
