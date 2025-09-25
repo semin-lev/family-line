@@ -8,7 +8,6 @@ echo "Building for local development..."
 docker build \
   --build-arg VITE_API_URL=http://localhost:3001 \
   --build-arg VITE_SOCKET_URL=http://localhost:3001 \
-  --build-arg VITE_BACKEND_PORT=3001 \
   -t webrtc-frontend:local \
   .
 
@@ -17,7 +16,6 @@ echo "Building for production..."
 docker build \
   --build-arg VITE_API_URL=https://api.yourdomain.com \
   --build-arg VITE_SOCKET_URL=https://api.yourdomain.com \
-  --build-arg VITE_BACKEND_PORT=443 \
   -t webrtc-frontend:production \
   .
 
@@ -26,7 +24,6 @@ echo "Building for staging..."
 docker build \
   --build-arg VITE_API_URL=https://staging-api.yourdomain.com \
   --build-arg VITE_SOCKET_URL=https://staging-api.yourdomain.com \
-  --build-arg VITE_BACKEND_PORT=443 \
   -t webrtc-frontend:staging \
   .
 

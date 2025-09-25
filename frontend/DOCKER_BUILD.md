@@ -12,7 +12,6 @@ The following build arguments are available:
 
 - `VITE_API_URL`: The base URL for API calls (e.g., `http://localhost:3001`, `https://api.yourdomain.com`)
 - `VITE_SOCKET_URL`: The URL for WebSocket connections (e.g., `http://localhost:3001`, `https://api.yourdomain.com`)
-- `VITE_BACKEND_PORT`: The backend port (default: `3001`)
 
 ## Usage Examples
 
@@ -21,7 +20,6 @@ The following build arguments are available:
 docker build \
   --build-arg VITE_API_URL=http://localhost:3001 \
   --build-arg VITE_SOCKET_URL=http://localhost:3001 \
-  --build-arg VITE_BACKEND_PORT=3001 \
   -t webrtc-frontend:local \
   .
 ```
@@ -31,7 +29,6 @@ docker build \
 docker build \
   --build-arg VITE_API_URL=https://api.yourdomain.com \
   --build-arg VITE_SOCKET_URL=https://api.yourdomain.com \
-  --build-arg VITE_BACKEND_PORT=443 \
   -t webrtc-frontend:production \
   .
 ```
@@ -41,7 +38,6 @@ docker build \
 docker build \
   --build-arg VITE_API_URL=https://staging-api.yourdomain.com \
   --build-arg VITE_SOCKET_URL=https://staging-api.yourdomain.com \
-  --build-arg VITE_BACKEND_PORT=443 \
   -t webrtc-frontend:staging \
   .
 ```

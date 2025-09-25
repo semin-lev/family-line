@@ -20,13 +20,11 @@ COPY . .
 # Accept build arguments for API and socket URLs
 ARG VITE_API_URL
 ARG VITE_SOCKET_URL
-ARG VITE_BACKEND_PORT=3001
 
 # Set environment variables for the build process
 ENV NODE_ENV=production
 ENV VITE_API_URL=$VITE_API_URL
 ENV VITE_SOCKET_URL=$VITE_SOCKET_URL
-ENV VITE_BACKEND_PORT=$VITE_BACKEND_PORT
 
 # Build the application
 RUN npm run build
