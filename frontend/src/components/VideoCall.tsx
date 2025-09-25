@@ -190,7 +190,7 @@ export const VideoCall: React.FC = () => {
           </div>
 
           {/* Remote Videos */}
-          {callState.participants.map((participant) => {
+          {callState.participants.filter(participant => participant.id !== callState.participantId).map((participant) => {
             const stream = callState.remoteStreams.get(participant.id);
             return (
               <div key={participant.id} className="relative bg-gray-800 rounded-lg overflow-hidden aspect-video">
